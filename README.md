@@ -1,4 +1,4 @@
-# # 🔮ChatGPT Telegrame Bot (nodejs)
+## 🔮ChatGPT Telegrame Bot (nodejs)
 
 > 💍️Telegram_bot powered by [chatGPT](https://chat.openai.com)，
 demo:[@sisChatBot](https://t.me/sisChatBot)
@@ -38,7 +38,7 @@ demo:[@sisChatBot](https://t.me/sisChatBot)
 4. 启动
 
    ```bash
-    node index.js
-    # 或者使用 pm2 （安装：npm i pm2）
-    pm2 start index.js
+    npm start
+    # 或者使用 pm2 （安装：npm i -g pm2）
+    pm2 start npm --name "chatGPTbot" -- start
    ``` 

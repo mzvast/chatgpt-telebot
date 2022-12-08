@@ -5,15 +5,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsx index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "chatgpt": "^1.2.1",
+    "@types/node": "^18.11.11",
+    "chatgpt": "^2.0.5",
     "dotenv": "^16.0.3",
     "node-telegram-bot-api": "^0.60.0",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "tsx": "^3.12.1"
   }
 }

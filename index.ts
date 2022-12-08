@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv'
 import { ChatGPTAPI } from 'chatgpt'
 import TelegramBot from 'node-telegram-bot-api'
+import { markdownSafe } from 'utils/StringParser'
 dotenv.config()
 const { token, sessionToken } = process.env
 
@@ -26,12 +27,14 @@ async function chatGpt(msg, bot) {
   try {
     const api = new ChatGPTAPI({ sessionToken })
     await api.ensureAuth()
-    const response = await api.sendMessage(msg.text)
+
+    const conversation = api.getConversation()
+
+    const response = await conversation.sendMessage(msg.text)
     console.log(response)
     bot.sendMessage(msg.chat.id, response, { parse_mode: 'Markdown' });
   } catch (err) {
-    console.log(err)
-    bot.sendMessage(msg.chat.id, '😭出错了，我需要休息一下。');
-    throw err
+    // console.error(err.message);
+    bot.sendMessage(msg.chat.id, '出错了，我需要休息一下。');
   }
 }

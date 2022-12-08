@@ -21,19 +21,28 @@ function msgHandler(msg) {
       break;
   }
 }
+
 async function chatGpt(msg) {
+  let timer;
   try {
-    // const api = new ChatGPTAPI({ sessionToken })
     await api.ensureAuth()
 
     bot.sendChatAction(msg.chat.id, 'typing');
 
+    // 保持typing状态
+    timer = setInterval(() => {
+      bot.sendChatAction(msg.chat.id, 'typing');
+    }, 5000);
+
     const response = await conversation.sendMessage(msg.text)
     console.log(response)
+    
     bot.sendMessage(msg.chat.id, response, { parse_mode: 'Markdown' });
   } catch (err) {
     // console.error(err.message);
     bot.sendMessage(msg.chat.id, '出错了，我需要休息一下。');
+  } finally{
+    clearInterval(timer);
   }
 }
 

@@ -29,11 +29,19 @@ async function chatGpt(msg: TelegramBot.Message) {
     try {
         await api.ensureAuth();
 
-        const [response, opts] = await convManager.sendMessage(msg);
+        await convManager.sendMessage(
+            msg,
+            async (response, opts) => {
+                // console.log(response);
 
-        console.log(response);
+                return await bot.sendMessage(msg.chat.id, response, opts);
+            },
+            (response, opts) => {
+                // console.log(response);
 
-        bot.sendMessage(msg.chat.id, response, opts);
+                bot.editMessageText(response, opts);
+            },
+        );
     } catch (err) {
         // console.error(err.message);
         bot.sendMessage(msg.chat.id, '出错了，我需要休息一下。');
@@ -72,10 +80,9 @@ async function main() {
                     msg.text = EKeyboardCommand.continue;
                 }
                 break;
-            case EKeyboardCommand.retry:
-                {
-                    // todo:
-                }
+            case EKeyboardCommand.retry: {
+                // todo:
+            }
             default:
                 break;
         }
@@ -83,7 +90,18 @@ async function main() {
     });
 }
 
+process
+    .on('unhandledRejection', (reason, p) => {
+        console.error(reason.toString(),'Unhandled Rejection at Promise');//, p);
+    })
+    .on('uncaughtException', err => {
+        console.error(err.message, 'Uncaught Exception thrown');
+        process.exit(1);
+    });
+
+
 main().catch(err => {
     console.error(err);
     process.exit(1);
 });
+

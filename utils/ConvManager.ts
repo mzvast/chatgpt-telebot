@@ -1,6 +1,22 @@
-import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
-import TelegramBot, {SendMessageOptions} from 'node-telegram-bot-api';
+import {
+    ChatGPTAPI,
+    ChatGPTConversation,
+    ConversationResponseEvent,
+} from 'chatgpt';
+import TelegramBot, {
+    EditMessageTextOptions,
+    SendMessageOptions,
+} from 'node-telegram-bot-api';
 import {EKeyboardCommand} from 'types';
+
+type ICallbackSendMsg = (
+    res: string,
+    opts: TelegramBot.SendMessageOptions,
+) => Promise<TelegramBot.Message>;
+type ICallbackEditMsg = (
+    res: string,
+    opts: TelegramBot.EditMessageTextOptions,
+) => void;
 
 const inlineKeyboardMarkup = {
     reply_markup: {
@@ -15,7 +31,28 @@ const inlineKeyboardMarkup = {
     },
 };
 
-const normalReplayOptions: SendMessageOptions = {
+const sendMsgOptions: SendMessageOptions = {
+    parse_mode: 'Markdown',
+    reply_markup: {
+        inline_keyboard: [
+            [
+                {
+                    text: '继续',
+                    callback_data: EKeyboardCommand.continue,
+                },
+            ],
+            // todo: not supported yet
+            // [
+            //     {
+            //         text: '重试',
+            //         callback_data: EKeyboardCommand.retry,
+            //     },
+            // ],
+        ],
+    },
+};
+
+const editMsgOptions: EditMessageTextOptions = {
     parse_mode: 'Markdown',
     reply_markup: {
         inline_keyboard: [
@@ -51,7 +88,11 @@ class ConvManager {
         return this._convMap.get(chatId);
     }
 
-    async sendMessage(msg: TelegramBot.Message) {
+    async sendMessage(
+        msg: TelegramBot.Message,
+        callbackSendMsg: ICallbackSendMsg,
+        callbackEditMsg: ICallbackEditMsg,
+    ) {
         const chatId = msg.chat.id;
         let text = msg.text;
         let forceNewConv = false;
@@ -67,13 +108,45 @@ class ConvManager {
                 break;
         }
         const conversation = this.getConvById(chatId, forceNewConv);
+
+        // cancel tokens
+        const ac = new AbortController();
+        const signal = ac.signal;
+
         this.startTyping(chatId);
+        let message_id;
+        async function handleUpdate(response: ConversationResponseEvent) {
+            const txt = response.message.content.parts[0] ?? '..'; // 不能为空，会报错
+            // console.log(response.message);
+            // if(response.message.end_turn)
+            // console.log('<<<out', message_id, txt);
+            try {
+                callbackEditMsg(txt, {
+                    ...editMsgOptions,
+                    message_id,
+                    chat_id: chatId,
+                });
+            } catch (error) {
+                ac.abort();
+                console.error(error.message);
+                // 这个error不能直接抛
+                // throw error;
+            }
+        }
         try {
-            const res = await conversation.sendMessage(text);
-            return [res, normalReplayOptions] as const;
+            // 1、创建初始消息
+            const res = await callbackSendMsg('.', sendMsgOptions);
+            message_id = res.message_id;
+
+            await conversation.sendMessage(text, {
+                onConversationResponse: handleUpdate, // 2、在基础上更新
+                abortSignal: signal,
+            });
         } catch (error) {
-            throw error;
+            console.error(error.message);
+            // 这个error不能直接抛
         } finally {
+            console.log('回复完成');
             this.stopTyping(chatId);
         }
     }

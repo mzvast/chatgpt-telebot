@@ -1,6 +1,11 @@
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot from 'node-telegram-bot-api';
 
+enum ECMD {
+    continue = '/continue',
+    reset = '/reset',
+}
+
 class ConvManager {
     _convMap: Map<number, ChatGPTConversation> = new Map();
     _pendingTimerMap: Map<number, NodeJS.Timer> = new Map();
@@ -9,8 +14,8 @@ class ConvManager {
         this._bot = _bot;
     }
 
-    getConvById(chatId: number) {
-        if (!this._convMap.has(chatId)) {
+    getConvById(chatId: number, force = false) {
+        if (!this._convMap.has(chatId) || force) {
             this._convMap.set(chatId, this._api.getConversation());
         }
         return this._convMap.get(chatId);
@@ -18,10 +23,23 @@ class ConvManager {
 
     async sendMessage(msg: TelegramBot.Message) {
         const chatId = msg.chat.id;
-        const conversation = this.getConvById(chatId);
+        let text = msg.text;
+        let forceNewConv = false;
+        switch (text) {
+            case ECMD.continue:
+                text = 'continue';
+                break;
+            case ECMD.reset:
+                forceNewConv = true;
+                text = '你好';
+                break;
+            default:
+                break;
+        }
+        const conversation = this.getConvById(chatId, forceNewConv);
         this.startTyping(chatId);
         try {
-            const res = await conversation.sendMessage(msg.text);
+            const res = await conversation.sendMessage(text);
             return res;
         } catch (error) {
             throw error;

@@ -4,12 +4,15 @@ import TelegramBot from 'node-telegram-bot-api';
 import {markdownSafe} from 'utils/StringParser';
 import ConvManager from 'utils/ConvManager';
 import {EKeyboardCommand} from 'types';
+import RateLimiter from 'utils/RateLimiter';
 dotenv.config();
-const {token, sessionToken} = process.env;
+const {token, sessionToken, superIds} = process.env;
 
 let bot: TelegramBot;
 let api: ChatGPTAPI;
 let convManager: ConvManager;
+
+const rateLimiter = new RateLimiter(superIds.split(',').map(x => +x));
 
 function msgHandler(msg: TelegramBot.Message) {
     switch (true) {
@@ -59,9 +62,14 @@ async function main() {
             new Date().toLocaleString(),
             '--收到来自id:',
             msg.chat.id,
+            '--name:',
+            msg.chat.username,
             '的消息:',
             msg.text,
         );
+        if (!rateLimiter.isClientAllowed(msg.chat.id)) {
+            return bot.sendMessage(msg.chat.id, '请求太频繁，请稍后再试。');
+        }
         msgHandler(msg);
     });
     bot.on('callback_query', callbackQuery => {
@@ -92,16 +100,14 @@ async function main() {
 
 process
     .on('unhandledRejection', (reason, p) => {
-        console.error(reason.toString(),'Unhandled Rejection at Promise');//, p);
+        console.error(reason.toString(), 'Unhandled Rejection at Promise'); //, p);
     })
     .on('uncaughtException', err => {
         console.error(err.message, 'Uncaught Exception thrown');
         process.exit(1);
     });
 
-
 main().catch(err => {
     console.error(err);
     process.exit(1);
 });
-

@@ -220,6 +220,11 @@ class ConvManager {
             }, 2000);
         } catch (error) {
             console.error(error.message);
+            callbackEditMsg('出错了' + error.message, {
+                ...finalMsgOptions,
+                message_id,
+                chat_id: chatId,
+            });
             // 这个error不能直接抛
         } finally {
             console.log('回复完成');

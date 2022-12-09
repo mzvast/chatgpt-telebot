@@ -1,8 +1,6 @@
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot, {SendMessageOptions} from 'node-telegram-bot-api';
-import { EKeyboardCommand } from 'types';
-
-
+import {EKeyboardCommand} from 'types';
 
 const inlineKeyboardMarkup = {
     reply_markup: {
@@ -27,6 +25,13 @@ const normalReplayOptions: SendMessageOptions = {
                     callback_data: EKeyboardCommand.continue,
                 },
             ],
+            // todo: not supported yet
+            // [
+            //     {
+            //         text: '重试',
+            //         callback_data: EKeyboardCommand.retry,
+            //     },
+            // ],
         ],
     },
 };

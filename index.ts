@@ -3,7 +3,7 @@ import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot from 'node-telegram-bot-api';
 import {markdownSafe} from 'utils/StringParser';
 import ConvManager from 'utils/ConvManager';
-import { EKeyboardCommand } from 'types';
+import {EKeyboardCommand} from 'types';
 dotenv.config();
 const {token, sessionToken} = process.env;
 
@@ -58,18 +58,28 @@ async function main() {
     });
     bot.on('callback_query', callbackQuery => {
         const {message: msg, data} = callbackQuery;
-        console.log("🚀 ~ file: index.ts:60 ~ main ~ data", data)
-        if (data === EKeyboardCommand.continue.slice(1)) {
-            console.log(
-                new Date().toLocaleString(),
-                '--收到来自id:',
-                msg.chat.id,
-                '的callback_query消息:',
-                data,
-            );
-            msg.text = EKeyboardCommand.continue;
-            msgHandler(msg);
+        console.log('🚀 ~ file: index.ts:60 ~ main ~ data', data);
+        console.log(
+            new Date().toLocaleString(),
+            '--收到来自id:',
+            msg.chat.id,
+            '的callback_query消息:',
+            data,
+        );
+        switch ('/' + data) {
+            case EKeyboardCommand.continue:
+                {
+                    msg.text = EKeyboardCommand.continue;
+                }
+                break;
+            case EKeyboardCommand.retry:
+                {
+                    // todo:
+                }
+            default:
+                break;
         }
+        msgHandler(msg);
     });
 }
 

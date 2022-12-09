@@ -1,10 +1,37 @@
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
-import TelegramBot from 'node-telegram-bot-api';
+import TelegramBot, {SendMessageOptions} from 'node-telegram-bot-api';
 
 enum ECMD {
     continue = '/continue',
     reset = '/reset',
 }
+
+const inlineKeyboardMarkup = {
+    reply_markup: {
+        inline_keyboard: [
+            [
+                {
+                    text: '继续',
+                    callback_data: 'continue',
+                },
+            ],
+        ],
+    },
+};
+
+const normalReplayOptions: SendMessageOptions = {
+    parse_mode: 'Markdown',
+    reply_markup: {
+        inline_keyboard: [
+            [
+                {
+                    text: '继续',
+                    callback_data: 'continue',
+                },
+            ],
+        ],
+    },
+};
 
 class ConvManager {
     _convMap: Map<number, ChatGPTConversation> = new Map();
@@ -40,7 +67,7 @@ class ConvManager {
         this.startTyping(chatId);
         try {
             const res = await conversation.sendMessage(text);
-            return res;
+            return [res, normalReplayOptions] as const;
         } catch (error) {
             throw error;
         } finally {

@@ -28,11 +28,11 @@ async function chatGpt(msg: TelegramBot.Message) {
     try {
         await api.ensureAuth();
 
-        const response = await convManager.sendMessage(msg);
+        const [response, opts] = await convManager.sendMessage(msg);
 
         console.log(response);
 
-        bot.sendMessage(msg.chat.id, response, {parse_mode: 'Markdown'});
+        bot.sendMessage(msg.chat.id, response, opts);
     } catch (err) {
         // console.error(err.message);
         bot.sendMessage(msg.chat.id, '出错了，我需要休息一下。');

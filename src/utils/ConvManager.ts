@@ -53,7 +53,14 @@ const sendMsgOptions: SendMessageOptions = {
     },
 };
 
-const editMsgOptions: EditMessageTextOptions = {
+const streamingMsgOptions: EditMessageTextOptions = {
+    parse_mode: 'Markdown',
+    reply_markup: {
+        inline_keyboard: [],
+    },
+};
+
+const finalMsgOptions: EditMessageTextOptions = {
     parse_mode: 'Markdown',
     reply_markup: {
         inline_keyboard: [
@@ -165,38 +172,58 @@ class ConvManager {
 
         this.startTyping(chatId);
         let message_id;
+        let timer;
+        let cacheText = '';
         async function handleUpdate(response: ConversationResponseEvent) {
             const txt = response.message.content.parts[0] ?? '..'; // 不能为空，会报错
             // console.log(response.message);
             // if(response.message.end_turn)
             // console.log('<<<out', message_id, txt);
-            try {
-                callbackEditMsg(txt, {
-                    ...editMsgOptions,
-                    message_id,
-                    chat_id: chatId,
-                });
-            } catch (error) {
-                ac.abort();
-                console.error(error.message);
-                // 这个error不能直接抛
-                // throw error;
+            if (timer) {
+                // 节流2秒，减少对单个用户的请求压力，避免被429
+                cacheText = txt;
+                return;
             }
+            timer = setTimeout(() => {
+                clearTimeout(timer);
+                timer = null;
+                try {
+                    callbackEditMsg(cacheText + '✍️', {
+                        ...streamingMsgOptions,
+                        message_id,
+                        chat_id: chatId,
+                    });
+                } catch (error) {
+                    ac.abort();
+                    console.error(error.message);
+                    // 这个error不能直接抛
+                    // throw error;
+                }
+            }, 2000);
         }
         try {
             // 1、创建初始消息
-            const res = await callbackSendMsg('.', sendMsgOptions);
+            const res = await callbackSendMsg('...🤔', streamingMsgOptions);
             message_id = res.message_id;
 
             await conversation.sendMessage(text, {
                 onConversationResponse: handleUpdate, // 2、在基础上更新
                 abortSignal: signal,
             });
+
+            setTimeout(() => {
+                callbackEditMsg(cacheText, {
+                    ...finalMsgOptions,
+                    message_id,
+                    chat_id: chatId,
+                });
+            }, 2000);
         } catch (error) {
             console.error(error.message);
             // 这个error不能直接抛
         } finally {
             console.log('回复完成');
+
             this.stopTyping(chatId);
         }
     }

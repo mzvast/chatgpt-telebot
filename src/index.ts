@@ -75,7 +75,6 @@ async function main() {
     });
     bot.on('callback_query', callbackQuery => {
         const {message: msg, data} = callbackQuery;
-        console.log('🚀 ~ file: index.ts:60 ~ main ~ data', data);
         console.log(
             new Date().toLocaleString(),
             '--收到来自id:',

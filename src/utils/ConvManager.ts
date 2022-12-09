@@ -7,7 +7,8 @@ import TelegramBot, {
     EditMessageTextOptions,
     SendMessageOptions,
 } from 'node-telegram-bot-api';
-import {EKeyboardCommand} from 'types';
+import {EKeyboardCommand} from '@/types';
+import DBManager from './DBManager';
 
 type ICallbackSendMsg = (
     res: string,
@@ -73,12 +74,34 @@ const editMsgOptions: EditMessageTextOptions = {
     },
 };
 
+type TConvItem = {conversationId: string; parentMessageId: string};
+
+export type TConvJSON = Record<number, TConvItem>;
+
+const DBPath = 'db.json';
+
 class ConvManager {
     _convMap: Map<number, ChatGPTConversation> = new Map();
     _pendingTimerMap: Map<number, NodeJS.Timer> = new Map();
-    constructor(private _api: ChatGPTAPI, private _bot: TelegramBot) {
+    constructor(
+        private _api: ChatGPTAPI,
+        private _bot: TelegramBot,
+        private _dbManager?: DBManager<TConvJSON>,
+    ) {
         this._api = _api;
         this._bot = _bot;
+        this._dbManager = _dbManager ?? new DBManager(DBPath);
+    }
+
+    loadDB() {
+        // recover
+        this._dbManager.load();
+        const data = this._dbManager.read();
+        this.loadConvMapFromJSON(data);
+    }
+
+    saveDB() {
+        this._dbManager.write(this.serializeConvMap());
     }
 
     getConvById(chatId: number, force = false) {
@@ -86,6 +109,33 @@ class ConvManager {
             this._convMap.set(chatId, this._api.getConversation());
         }
         return this._convMap.get(chatId);
+    }
+
+    serializeConvMap(): TConvJSON {
+        const ans = {};
+        this._convMap.forEach((v, k) => {
+            ans[k] = {
+                conversationId: v.conversationId,
+                parentMessageId: v.parentMessageId,
+            };
+        });
+        return ans;
+    }
+
+    loadConvMapFromJSON(data) {
+        this._convMap = new Map();
+        for (const k in data) {
+            if (data.hasOwnProperty(k)) {
+                const v = data[k];
+                this._convMap.set(
+                    parseInt(k),
+                    this._api.getConversation({
+                        conversationId: v.conversationId,
+                        parentMessageId: v.parentMessageId,
+                    }),
+                );
+            }
+        }
     }
 
     async sendMessage(

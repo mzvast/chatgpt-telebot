@@ -1,10 +1,10 @@
 import * as dotenv from 'dotenv';
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot from 'node-telegram-bot-api';
-import {markdownSafe} from 'utils/StringParser';
-import ConvManager from 'utils/ConvManager';
-import {EKeyboardCommand} from 'types';
-import RateLimiter from 'utils/RateLimiter';
+import {markdownSafe} from '@/utils/StringParser';
+import ConvManager from '@/utils/ConvManager';
+import {EKeyboardCommand} from '@/types';
+import RateLimiter from '@/utils/RateLimiter';
 dotenv.config();
 const {token, sessionToken, superIds} = process.env;
 
@@ -56,6 +56,7 @@ async function main() {
     console.log(new Date().toLocaleString(), '--Bot has been started...');
     api = new ChatGPTAPI({sessionToken});
     convManager = new ConvManager(api, bot);
+    convManager.loadDB();
 
     bot.on('message', msg => {
         console.log(
@@ -105,6 +106,9 @@ process
     .on('uncaughtException', err => {
         console.error(err.message, 'Uncaught Exception thrown');
         process.exit(1);
+    })
+    .on('exit', () => {
+        convManager.saveDB();
     });
 
 main().catch(err => {

@@ -25,3 +25,4 @@ pnpm-debug.log*
 *.sln
 *.sw?
 *.mp4
+db.json

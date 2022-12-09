@@ -1,7 +1,7 @@
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot, {SendMessageOptions} from 'node-telegram-bot-api';
 
-enum ECMD {
+export enum ECMD {
     continue = '/continue',
     reset = '/reset',
 }
@@ -26,7 +26,7 @@ const normalReplayOptions: SendMessageOptions = {
             [
                 {
                     text: '继续',
-                    callback_data: 'continue',
+                    callback_data: ECMD.continue,
                 },
             ],
         ],

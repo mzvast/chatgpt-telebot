@@ -55,16 +55,18 @@ async function main() {
         );
         msgHandler(msg);
     });
-    bot.on('callback_query', query => {
-        const msg = query.message;
-        console.log(
-            new Date().toLocaleString(),
-            '--收到来自id:',
-            msg.chat.id,
-            '的callback_query消息:',
-            msg.text,
-        );
-        msgHandler(msg);
+    bot.on('callback_query', callbackQuery => {
+        const {message: msg, data} = callbackQuery;
+        if (data === 'continue') {
+            console.log(
+                new Date().toLocaleString(),
+                '--收到来自id:',
+                msg.chat.id,
+                '的callback_query消息:',
+                data,
+            );
+            msgHandler(msg);
+        }
     });
 }
 

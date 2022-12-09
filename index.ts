@@ -2,7 +2,8 @@ import * as dotenv from 'dotenv';
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot from 'node-telegram-bot-api';
 import {markdownSafe} from 'utils/StringParser';
-import ConvManager, { ECMD } from 'utils/ConvManager';
+import ConvManager from 'utils/ConvManager';
+import { EKeyboardCommand } from 'types';
 dotenv.config();
 const {token, sessionToken} = process.env;
 
@@ -57,7 +58,8 @@ async function main() {
     });
     bot.on('callback_query', callbackQuery => {
         const {message: msg, data} = callbackQuery;
-        if (data === ECMD.continue) {
+        console.log("🚀 ~ file: index.ts:60 ~ main ~ data", data)
+        if (data === EKeyboardCommand.continue.slice(1)) {
             console.log(
                 new Date().toLocaleString(),
                 '--收到来自id:',
@@ -65,7 +67,7 @@ async function main() {
                 '的callback_query消息:',
                 data,
             );
-            msg.text = ECMD.continue;
+            msg.text = EKeyboardCommand.continue;
             msgHandler(msg);
         }
     });

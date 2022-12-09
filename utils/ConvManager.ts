@@ -1,10 +1,8 @@
 import {ChatGPTAPI, ChatGPTConversation} from 'chatgpt';
 import TelegramBot, {SendMessageOptions} from 'node-telegram-bot-api';
+import { EKeyboardCommand } from 'types';
 
-export enum ECMD {
-    continue = '/continue',
-    reset = '/reset',
-}
+
 
 const inlineKeyboardMarkup = {
     reply_markup: {
@@ -26,7 +24,7 @@ const normalReplayOptions: SendMessageOptions = {
             [
                 {
                     text: '继续',
-                    callback_data: ECMD.continue,
+                    callback_data: EKeyboardCommand.continue,
                 },
             ],
         ],
@@ -53,10 +51,10 @@ class ConvManager {
         let text = msg.text;
         let forceNewConv = false;
         switch (text) {
-            case ECMD.continue:
+            case EKeyboardCommand.continue:
                 text = 'continue';
                 break;
-            case ECMD.reset:
+            case EKeyboardCommand.reset:
                 forceNewConv = true;
                 text = '你好';
                 break;

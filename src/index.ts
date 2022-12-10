@@ -7,7 +7,6 @@ import {EKeyboardCommand} from '@/types';
 import RateLimiter from '@/utils/RateLimiter';
 dotenv.config();
 const {token, sessionToken, superIds} = process.env;
-
 let bot: TelegramBot;
 let api: ChatGPTAPI;
 let convManager: ConvManager;
@@ -41,12 +40,18 @@ async function chatGpt(msg: TelegramBot.Message) {
             },
             (response, opts) => {
                 // console.log(response);
-
-                bot.editMessageText(response, opts);
+                if (response) {
+                    bot.editMessageText(response, opts);
+                } else {
+                    bot.editMessageReplyMarkup(opts.reply_markup, {
+                        chat_id: opts.chat_id,
+                        message_id: opts.message_id,
+                    });
+                }
             },
         );
     } catch (err) {
-        // console.error(err.message);
+        console.error(err.message);
         bot.sendMessage(msg.chat.id, '出错了，我需要休息一下。');
     }
 }
